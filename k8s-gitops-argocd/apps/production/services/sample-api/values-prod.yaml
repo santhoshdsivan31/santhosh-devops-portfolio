@@ -1,0 +1,19 @@
+# Production overrides
+replicaCount: 3
+
+image:
+  tag: "1.0.0"   # Updated by CI pipeline on each deploy
+
+resources:
+  requests:
+    cpu: 200m
+    memory: 256Mi
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+
+keda:
+  enabled: true
+  kafkaTopic: "api-events"
+  kafkaConsumerGroup: "sample-api-group"
+  lagThreshold: "100"

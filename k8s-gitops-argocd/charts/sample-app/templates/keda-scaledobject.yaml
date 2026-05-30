@@ -1,0 +1,19 @@
+{{- if .Values.keda.enabled }}
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: {{ include "sample-app.fullname" . }}
+spec:
+  scaleTargetRef:
+    name: {{ include "sample-app.fullname" . }}
+  minReplicaCount: {{ .Values.autoscaling.minReplicas }}
+  maxReplicaCount: {{ .Values.autoscaling.maxReplicas }}
+  cooldownPeriod: 60
+  triggers:
+    - type: kafka
+      metadata:
+        bootstrapServers: kafka.kafka.svc.cluster.local:9092
+        consumerGroup: {{ .Values.keda.kafkaConsumerGroup }}
+        topic: {{ .Values.keda.kafkaTopic }}
+        lagThreshold: {{ .Values.keda.lagThreshold | quote }}
+{{- end }}

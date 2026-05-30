@@ -1,0 +1,50 @@
+# ApplicationSet — generates one ArgoCD Application per microservice directory
+# Add a new microservice by simply creating a folder under apps/production/services/
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: production-services
+  namespace: argocd
+spec:
+  generators:
+    - git:
+        repoURL: https://github.com/santhoshdsivan31/k8s-gitops-argocd
+        revision: HEAD
+        directories:
+          - path: apps/production/services/*
+  template:
+    metadata:
+      name: "{{path.basename}}"
+      namespace: argocd
+      finalizers: [resources-finalizer.argocd.argoproj.io]
+      annotations:
+        notifications.argoproj.io/subscribe.on-sync-succeeded.slack: deployments
+        notifications.argoproj.io/subscribe.on-health-degraded.slack: alerts
+    spec:
+      project: production
+      source:
+        repoURL: https://github.com/santhoshdsivan31/k8s-gitops-argocd
+        targetRevision: HEAD
+        path: "{{path}}"
+        helm:
+          valueFiles:
+            - values.yaml
+            - values-prod.yaml
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: "{{path.basename}}"
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        retry:
+          limit: 3
+          backoff:
+            duration: 10s
+            factor: 2
+            maxDuration: 3m
+        syncOptions:
+          - CreateNamespace=true
+          - ApplyOutOfSyncOnly=true
+          - ServerSideApply=true
+      revisionHistoryLimit: 5

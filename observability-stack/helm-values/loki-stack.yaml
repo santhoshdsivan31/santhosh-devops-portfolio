@@ -1,0 +1,50 @@
+loki:
+  enabled: true
+  persistence:
+    enabled: true
+    storageClassName: gp3
+    size: 30Gi
+
+  config:
+    table_manager:
+      retention_deletes_enabled: true
+      retention_period: 336h  # 14 days
+
+    schema_config:
+      configs:
+        - from: "2024-01-01"
+          store: boltdb-shipper
+          object_store: s3
+          schema: v11
+          index:
+            prefix: loki_index_
+            period: 24h
+
+    storage_config:
+      aws:
+        s3: s3://ap-south-1/your-loki-bucket
+        region: ap-south-1
+      boltdb_shipper:
+        active_index_directory: /data/loki/boltdb-shipper-active
+        cache_location: /data/loki/boltdb-shipper-cache
+        shared_store: s3
+
+  serviceAccount:
+    annotations:
+      eks.amazonaws.com/role-arn: arn:aws:iam::ACCOUNT_ID:role/prod-eks-loki
+
+promtail:
+  enabled: true
+  config:
+    clients:
+      - url: http://loki:3100/loki/api/v1/push
+    snippets:
+      pipelineStages:
+        - cri: {}
+        - labeldrop:
+            - filename
+        - labels:
+            namespace:
+            pod:
+            container:
+            app:

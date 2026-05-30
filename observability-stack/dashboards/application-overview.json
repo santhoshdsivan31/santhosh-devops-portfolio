@@ -1,0 +1,53 @@
+{
+  "__inputs": [{ "name": "DS_PROMETHEUS", "label": "Prometheus", "type": "datasource", "pluginId": "prometheus" }],
+  "title": "Application Overview",
+  "uid": "app-overview",
+  "tags": ["kubernetes", "application"],
+  "schemaVersion": 38,
+  "time": { "from": "now-1h", "to": "now" },
+  "refresh": "30s",
+  "panels": [
+    {
+      "id": 1, "type": "stat", "title": "Request Rate (RPS)",
+      "gridPos": { "x": 0, "y": 0, "w": 6, "h": 4 },
+      "targets": [{
+        "datasource": "${DS_PROMETHEUS}",
+        "expr": "sum(rate(http_requests_total[5m]))",
+        "legendFormat": "RPS"
+      }],
+      "options": { "colorMode": "background", "graphMode": "area" }
+    },
+    {
+      "id": 2, "type": "stat", "title": "Error Rate %",
+      "gridPos": { "x": 6, "y": 0, "w": 6, "h": 4 },
+      "targets": [{
+        "datasource": "${DS_PROMETHEUS}",
+        "expr": "100 * sum(rate(http_requests_total{status=~'5..'}[5m])) / sum(rate(http_requests_total[5m]))",
+        "legendFormat": "Error %"
+      }],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": { "steps": [{"color":"green","value":0},{"color":"yellow","value":1},{"color":"red","value":5}] }
+        }
+      }
+    },
+    {
+      "id": 3, "type": "stat", "title": "P99 Latency (ms)",
+      "gridPos": { "x": 12, "y": 0, "w": 6, "h": 4 },
+      "targets": [{
+        "datasource": "${DS_PROMETHEUS}",
+        "expr": "1000 * histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))",
+        "legendFormat": "p99"
+      }]
+    },
+    {
+      "id": 4, "type": "timeseries", "title": "Request Rate by Service",
+      "gridPos": { "x": 0, "y": 4, "w": 24, "h": 8 },
+      "targets": [{
+        "datasource": "${DS_PROMETHEUS}",
+        "expr": "sum(rate(http_requests_total[5m])) by (service)",
+        "legendFormat": "{{ service }}"
+      }]
+    }
+  ]
+}
