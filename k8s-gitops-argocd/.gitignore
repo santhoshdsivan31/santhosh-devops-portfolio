@@ -1,3 +1,0 @@
-*.kubeconfig
-.env
-secrets/

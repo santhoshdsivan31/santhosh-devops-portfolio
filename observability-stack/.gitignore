@@ -1,4 +1,0 @@
-*.kubeconfig
-.env
-secrets/
-grafana-data/
